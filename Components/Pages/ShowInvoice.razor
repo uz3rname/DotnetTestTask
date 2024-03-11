@@ -1,0 +1,45 @@
+@page "/Invoices/{Id}"
+@inject IInvoiceService invoiceService
+@inject NavigationManager navigationManager
+@inject IInvoiceItemService invoiceItemService
+@inject IJSRuntime JS
+
+<PageTitle>Invoice @Id</PageTitle>
+
+<h1>Invoice @Id</h1>
+
+<table class="table">
+    <tbody>
+        <tr><td>Creator</td><td>@invoice?.InvoiceCreator.Name</td></tr>
+        <tr><td>Timestamp</td><td>@invoice?.Timestamp.ToShortTimeString()</td></tr>
+    </tbody>
+</table>
+
+<h2>Items</h2>
+
+@if (invoice != null)
+{
+<InvoiceItemList Items=@invoice.InvoiceItems />
+}
+
+<a href="/Invoices/@Id/Download" target="_blank">Download XLSX</a>
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    private Invoice? invoice { get; set; }
+    
+    protected async override Task OnInitializedAsync()
+    {
+        Guid guid;
+        var valid = Guid.TryParse(Id, out guid);
+        var i = await invoiceService.GetById(guid);
+        if (!valid || i == null)
+        {
+            navigationManager.NavigateTo("/NotFound");
+        }
+        else
+        {
+            invoice = i;
+        }
+    }
+}

@@ -1,0 +1,9 @@
+.vs/
+.mono/
+bin/
+obj/
+*.user
+artifacts/
+.vscode/
+.dotnet/
+*.binlog

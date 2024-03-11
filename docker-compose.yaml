@@ -1,0 +1,18 @@
+services:
+  app:
+    build: '.'
+    ports:
+      - '8080:8080'
+    environment:
+      - APPSETTINGS_DB_STR=Host=postgres;Port=5432;Database=postgres;Username=postgres;Password=postgres
+    depends_on:
+      - postgres
+
+  postgres:
+    image: 'postgres:15.4-alpine'
+    ports:
+      - 5431:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=postgres

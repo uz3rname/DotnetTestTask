@@ -1,0 +1,30 @@
+<EditForm Model="_form" OnValidSubmit="SubmitForm">
+    <div class="form-group">
+        <label for="_form.Amount">Amount</label>
+        <InputNumber @bind-Value="_form.Amount" min="0" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Submit</button>
+</EditForm>
+
+
+@code {
+    public class Form
+    {
+        public int Amount { get; set; } = 0;
+    }
+    private Form _form = new();
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [Parameter] public int Amount { get; set; } = 0;
+
+    private async Task SubmitForm()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(_form));
+    }
+    
+    protected override void OnInitialized()
+    {
+        BlazoredModal.SetTitle("Edit amount");
+        _form.Amount = Amount;
+    }
+}

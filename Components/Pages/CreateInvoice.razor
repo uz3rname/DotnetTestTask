@@ -1,0 +1,75 @@
+@page "/CreateInvoice"
+@inject IInvoiceItemService invoiceItemService
+@inject IInvoiceService invoiceService
+@inject IInvoiceCreatorService invoiceCreatorService
+@inject NavigationManager NavigationManager
+@inject IWebUtils webUtils
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<PageTitle>Create Invoice</PageTitle>
+
+<EditForm Model="_form" OnValidSubmit="SubmitForm">
+    <label for="_form.Name">Creator Name</label>
+    <InputText @bind-Value="_form.Name" class="form-control"/>
+
+    <h3>Items</h3>
+
+    <InvoiceItemList Items=@invoiceItems DeleteButton=true OnDelete="@(async item => invoiceItems.Remove(item))" />
+
+    <button class="btn btn-secondary" type="button" @onclick="@ShowAddInvoiceItemModal">Add Item</button>
+    
+    <button class="btn btn-primary" type="submit">Create</button>
+</EditForm>
+
+
+@code {
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+    private List<InvoiceItem> invoiceItems { get; set; } = [];
+    private class Form
+    {
+        public string Name { get; set; } = "";
+    }
+    private readonly Form _form = new();
+
+    private async Task SubmitForm()
+    {
+        try
+        {
+            var creator = await invoiceCreatorService.GetByNameOrCreate(_form.Name);
+            var invoice = await invoiceService.Save(new CreateInvoiceArguments {
+                InvoiceCreator = creator,
+                InvoiceItems = invoiceItems,
+            });
+            NavigationManager.NavigateTo($"/Invoices/{invoice.Id}", true);
+        }
+        catch (Exception ex) when (ex is InvalidAmount || ex is DbUpdateException)
+        {
+            await webUtils.ShowErrorModal(ex.Message);
+        }
+    }
+    
+    private async Task ShowAddInvoiceItemModal()
+    {
+        var modal = Modal.Show<AddInvoiceItem>("Add Item");
+        var result = await modal.Result;
+        if (result.Confirmed)
+        {
+            var itemData = (CreateInvoiceItemArguments)result.Data!;
+            if (itemData.Amount <= 0)
+            {
+                await webUtils.ShowErrorModal("Amount should be greater than 0!");
+                return;
+            }
+            var existingItem = invoiceItems.Find(x => x.StoreItemId == itemData.StoreItem.Id);
+            if (existingItem != null)
+            {
+                existingItem.Amount += itemData.Amount;
+            }
+            else
+            {
+                invoiceItems.Add(invoiceItemService.Create(itemData));
+            }
+        }
+    }
+}

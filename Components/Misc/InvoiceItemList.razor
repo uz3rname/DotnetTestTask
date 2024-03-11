@@ -1,0 +1,34 @@
+@inject AppDbContext dbContext
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Amount</th>
+            @if (DeleteButton)
+            {
+            <th>Delete</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Items)
+        {
+            <tr>
+                <td>@item.StoreItem.Name</td>
+                <td>@item.Amount</td>
+                @if (DeleteButton && OnDelete != null)
+                {
+                <td><TrashButton @onclick="@(() => OnDelete(item))" /></td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    public delegate Task OnDeleteCallback(InvoiceItem item);
+    [Parameter] public ICollection<InvoiceItem> Items { get; set; } = [];
+    [Parameter] public bool DeleteButton { get; set; } = false;
+    [Parameter] public OnDeleteCallback? OnDelete { get; set; }
+}

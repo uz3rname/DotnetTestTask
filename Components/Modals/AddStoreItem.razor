@@ -1,0 +1,35 @@
+<div>
+    <EditForm Model="_form" OnValidSubmit="SubmitForm">
+        <div class="form-group">
+            <label for="_form.Name">Name</label>
+            <InputText @bind-Value="_form.Name" class="form-control"/>
+            
+            <label for="_form.Amount">Amount</label>
+            <InputNumber @bind-Value="_form.Amount" min="0" class="form-control"/>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Submit</button>
+    </EditForm>
+</div>
+
+
+@code {
+    private class Form
+    {
+        public string Name { get; set; } = "";
+        public int Amount { get; set; } = 0;
+    }
+    private Form _form = new();
+
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+
+    protected override void OnInitialized() => BlazoredModal.SetTitle("Add new item");
+
+    private async Task SubmitForm()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(new CreateStoreItemArguments {
+            Amount = _form.Amount,
+            Name = _form.Name,
+        }));
+    }
+}

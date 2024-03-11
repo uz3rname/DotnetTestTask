@@ -1,0 +1,58 @@
+@page "/Invoices"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@inject IInvoiceService invoiceService
+@inject NavigationManager navigationManager
+
+<PageTitle>Invoices</PageTitle>
+
+<h1>Invoices</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Timestamp</th>
+            <th>Creator</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in invoices)
+        {
+            <tr>
+                <td>
+                    <a href="/Invoices/@item.Id">@item.Id</a>
+                </td>
+                <td>@item.Timestamp.ToShortTimeString()</td>
+                <td>@item.InvoiceCreator.Name</td>
+                <td><TrashButton @onclick="@(() => DeleteInvoice(item))" /></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button class="btn btn-primary" @onclick="AddInvoice">Add invoice</button>
+
+
+@code {
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+    private List<Invoice> invoices { get; set; } = [];
+    
+    private void AddInvoice()
+    {
+        navigationManager.NavigateTo("/CreateInvoice");
+    }
+    
+    private async Task DeleteInvoice(Invoice item)
+    {
+        await invoiceService.Delete(item);
+        invoices.Remove(item);
+        navigationManager.NavigateTo(navigationManager.Uri, true);
+    }
+    
+    protected async override Task OnInitializedAsync()
+    {
+        invoices = await invoiceService.GetAll();
+    }
+}

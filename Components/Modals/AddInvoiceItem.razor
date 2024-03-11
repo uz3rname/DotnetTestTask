@@ -1,0 +1,59 @@
+@inject IStoreItemService storeItemService
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<EditForm Model="_form" OnValidSubmit="SubmitForm">
+    <label>Item</label>
+    <select @bind="@_form.StoreItemId" class="form-select">
+        @foreach (var item in storeItems)
+        {
+            <option value="@item.Id">@item.Name</option>
+        }
+    </select>
+
+    <label for="_form.ItemAmount">Amount</label>
+
+    <InputNumber @bind-Value="_form.Amount" class="form-control" />
+
+    <button class="btn btn-primary" type="submit">Submit</button>
+</EditForm>
+
+@code {
+    public class Form
+    {
+        public int Amount { get; set; } = 0;
+        public string StoreItemId { get; set; } = "";
+    }
+    
+    private readonly Form _form = new();
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    private List<StoreItem> storeItems = [];
+
+    protected override void OnInitialized() => BlazoredModal.SetTitle("Add new item");
+
+    private async Task SubmitForm()
+    {
+        var id = Guid.Parse(_form.StoreItemId);
+        var storeItem = storeItems.Find(x => x.Id == id);
+        if (storeItem != null)
+        {
+            await BlazoredModal.CloseAsync(ModalResult.Ok(new CreateInvoiceItemArguments {
+                Amount = _form.Amount,
+                StoreItem = storeItem,
+            }));
+        }
+        else
+        {
+            await BlazoredModal.CloseAsync(ModalResult.Cancel());
+        }
+    }
+    
+    protected async override Task OnInitializedAsync()
+    {
+        storeItems = await storeItemService.GetAll();
+        if (storeItems.Count > 0)
+        {
+            _form.StoreItemId = storeItems[0].Id.ToString();
+        }
+    }
+}

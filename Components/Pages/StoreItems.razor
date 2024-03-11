@@ -1,0 +1,91 @@
+@page "/"
+@attribute [StreamRendering]
+@inject IStoreItemService storeItemService
+@rendermode InteractiveServer
+@inject IWebUtils webUtils
+
+<PageTitle>Store Items</PageTitle>
+
+<h1>Items</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in storeItems)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td><a href="javascript:;" @onclick="@(() => EditAmount(item))">@item.Amount</a></td>
+                <td><TrashButton @onclick="@(() => DeleteItem(item))" /></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button class="btn btn-primary" @onclick="ShowAddItemModal">Add item</button>
+
+
+@code {
+    [CascadingParameter] private IModalService Modal { get; set; } = default!;
+    private List<StoreItem> storeItems { get; set; } = [];
+
+    private async Task ShowAddItemModal()
+    {
+        var modal = Modal.Show<AddStoreItem>("Add Item");
+        var result = await modal.Result;
+        if (result.Confirmed)
+        {
+            var form = (CreateStoreItemArguments)result.Data!;
+            try
+            {
+                await storeItemService.Save(form);
+            }
+            catch (Exception ex) when (ex is InvalidAmount || ex is DbUpdateException)
+            {
+                await webUtils.ShowErrorModal(ex.Message);
+            }
+        }
+        await UpdateItems();
+    }
+    
+    private async Task EditAmount(StoreItem item)
+    {
+        var amountParams = new ModalParameters()
+            .Add(nameof(EditAmountModal.Amount), item.Amount);
+        var modal = Modal.Show<EditAmountModal>("Edit amount", amountParams);
+        var result = await modal.Result;
+        if (result.Confirmed)
+        {
+            var data = (EditAmountModal.Form)result.Data!;
+            item.Amount = data.Amount;
+            try
+            {
+                await storeItemService.Update(item);
+            }
+            catch (Exception ex) when (ex is InvalidAmount || ex is DbUpdateException)
+            {
+                await webUtils.ShowErrorModal(ex.Message);
+            }
+        }
+        await UpdateItems();
+    }
+
+    private async Task UpdateItems()
+    {
+        storeItems = await storeItemService.GetAll();
+    }
+    
+    private async Task DeleteItem(StoreItem item)
+    {
+        await storeItemService.Delete(item);
+        await UpdateItems();
+    }
+
+    protected async override Task OnInitializedAsync() => await UpdateItems();
+}
