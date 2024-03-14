@@ -1,12 +1,14 @@
 using DotnetTestTask.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace DotnetTestTask.Data
 {
     public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {}
+        {
+        }
 
         public DbSet<StoreItem> StoreItems { get; set; }
         public DbSet<Invoice> Invoices { get; set; }

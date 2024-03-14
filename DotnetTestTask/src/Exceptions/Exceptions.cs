@@ -5,5 +5,8 @@ namespace DotnetTestTask.Exceptions
         public InvalidAmount(string message) : base(message)
         {
         }
+        public InvalidAmount(string message, Exception ex) : base(message, ex)
+        {
+        }
     }
 }
